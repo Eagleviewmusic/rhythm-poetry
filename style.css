@@ -1,0 +1,957 @@
+body { margin: 0; padding: 46px 0 0 0; }
+#poem { font-size: 1.2em; line-height: 2em; padding: 20px; }
+.line { display: block; margin-bottom: 16px; text-align: center; }
+.measure { display: inline-block; vertical-align: top; }
+.measure-divider { display: inline-block; width: 2px; background-color: #666; margin: 0 8px; vertical-align: top; position: relative; }
+.final-measure-divider { display: inline-block; width: 6px; background: linear-gradient(to right, #666 0%, #666 25%, transparent 25%, transparent 75%, #666 75%, #666 100%); margin: 0 8px; vertical-align: top; position: relative; }
+.group { display: inline-block; vertical-align: top; margin-right: 8px; text-align: center; }
+.notes-box { display: flex; justify-content: center; align-items: center; margin-bottom: 4px; border: none; padding: 4px; transition: background-color 0.1s ease; }
+.notes-box.playing, .notes-box.selected { background-color: #ffff99; border-radius: 4px; }
+.notes-box svg, .notes-box img { margin: 0 4px; }
+.notes-box.compound svg, .notes-box.compound img { }
+.notes-box.sixteenth svg, .notes-box.sixteenth img { }
+.circles { display: flex; justify-content: center; margin-bottom: 4px; border: 1px solid #c0c0c0; padding: 6px 8px; background-color: #f5f5f5; border-radius: 8px; transition: opacity 0.3s ease; }
+.circles.circles-hidden { opacity: 0; pointer-events: none; }
+.circles.pickup {
+    background-color: #90EE90; /* Brighter Green */
+}
+.circle { margin: 0 2px; border-radius: 50%; background-color: grey; cursor: pointer; }
+.circle.active { background-color: #007bff; }
+.circle.syncopated { background-color: #28a745; } /* Green for syncopated */
+.words { display: flex; justify-content: center; }
+.word-container { display: inline-block; margin: 0 4px; text-align: center; }
+.word, .word-input { display: block; cursor: pointer; }
+.word.rest { color: #d3d3d3; }
+.word-input { font-size: 1em; width: auto; padding: 2px 4px; box-sizing: border-box; border-color: black; }
+
+/* Floating bottom panel - redesigned for better responsiveness */
+.floating-panel { 
+  position: fixed; 
+  bottom: 0; 
+  left: 0; 
+  right: 0; 
+  background-color: #e6f3ff; 
+  border-top: 2px solid #0066cc; 
+  display: flex; 
+  flex-wrap: wrap;
+  align-items: center; 
+  justify-content: center; 
+  gap: 8px;
+  padding: 10px 15px; 
+  z-index: 1000;
+  transition: bottom 0.3s ease-in-out;
+  min-height: 60px;
+}
+
+.floating-panel.collapsed {
+  bottom: -100%;
+}
+
+/* Panel Toggle Button */
+.panel-toggle-button {
+  position: fixed;
+  bottom: 60px; /* Positioned on top of the panel's border */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 20px;
+  background-color: #0066cc;
+  border: none;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  cursor: pointer;
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: bottom 0.3s ease-in-out;
+}
+
+.panel-toggle-button::after {
+  content: '▼'; /* Down arrow */
+  color: white;
+  font-size: 14px;
+}
+
+.panel-toggle-button.collapsed {
+  bottom: 10px; /* Moves with the panel but stays visible */
+}
+
+.panel-toggle-button.collapsed::after {
+  content: '▲'; /* Up arrow */
+}
+
+
+/* Base style for control buttons */
+.control-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 12px;
+  background-color: #f0f8ff;
+  border: 1px solid #007bff;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  color: #007bff;
+  font-weight: bold;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.control-button:hover {
+  background-color: #e6f3ff;
+}
+
+.control-button input {
+  width: 40px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #007bff;
+  border: none;
+  background: transparent;
+  text-align: center;
+}
+
+/* Lyrics dropdown - make it more compact */
+.lyrics-dropdown,
+.rhythm-systems-dropdown {
+  min-width: 120px;
+  max-width: 200px;
+  flex-shrink: 1;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Copy Visual Button */
+.copy-visual-button {
+    font-size: 18px;
+    padding: 0 12px;
+    min-width: 40px;
+}
+
+/* Save Button */
+.save-button {
+    padding: 0 12px;
+    min-width: 40px;
+}
+
+.save-icon {
+    width: 20px;
+    height: 20px;
+    background-color: #007bff;
+    border-radius: 2px;
+    position: relative;
+    border: 1px solid #0056b3;
+    box-sizing: border-box;
+}
+
+.save-icon::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 3px;
+    width: 10px;
+    height: 10px;
+    background-color: #e6f3ff;
+    border-bottom-left-radius: 2px;
+    border-bottom-right-radius: 2px;
+    border: 1px solid #0056b3;
+    border-top: none;
+}
+
+.save-icon::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 2px;
+    right: 2px;
+    height: 6px;
+    background-color: #a9cce3;
+    border-top: 1px solid #0056b3;
+}
+
+/* Circle icon button */
+.icon-button { 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  width: 40px; 
+  height: 40px;
+  border-radius: 6px; 
+  cursor: pointer; 
+  transition: all 0.2s ease; 
+  flex-shrink: 0;
+}
+
+.icon-button.active { 
+  background-color: #f0f8ff; 
+  border: 1px solid #007bff; 
+}
+
+.icon-button.inactive { 
+  background-color: #f8f8f8; 
+  border: 1px solid #999; 
+}
+
+.icon-circles { 
+  display: flex; 
+  gap: 2px; 
+}
+
+.icon-circle { 
+  width: 8px; 
+  height: 8px; 
+  border-radius: 50%; 
+}
+
+.icon-button.active .icon-circle { 
+  background-color: #007bff; 
+}
+
+.icon-button.inactive .icon-circle { 
+  background-color: #999; 
+}
+
+/* Time signature button */
+.ts-button-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+.time-signature-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background-color: #f0f8ff;
+  border: 1px solid #007bff;
+  border-radius: 6px;
+  font-family: 'Times New Roman', serif;
+  font-weight: bold;
+  line-height: 1;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.time-signature-button:hover {
+  background-color: #e6f3ff;
+}
+
+.time-signature-top {
+  font-size: 16px;
+  color: #007bff;
+  margin: 0;
+  padding: 0;
+}
+
+.time-signature-bottom {
+  font-size: 16px;
+  color: #333;
+  margin: 0;
+  padding: 0;
+}
+
+/* Styles for compound time signature */
+.time-signature-button.compound .time-signature-top {
+  color: #28a745; /* Green */
+}
+
+.time-signature-button.compound .time-signature-bottom {
+  color: #007bff; /* Blue */
+}
+
+
+/* Play button */
+.play-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 40px;
+  background-color: #f0f8ff;
+  border: 1px solid #007bff;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 20px;
+  color: #007bff;
+  flex-shrink: 0;
+}
+
+.play-button:hover {
+  background-color: #e6f3ff;
+}
+
+.play-button.playing {
+  background-color: #007bff;
+  color: white;
+}
+
+/* 16th Note Button */
+.sixteenth-note-button {
+    padding: 0 8px;
+    min-width: 40px;
+    flex-shrink: 0;
+}
+.sixteenth-note-button img {
+    height: 80%;
+    filter: grayscale(1);
+    opacity: 0.7;
+    transition: all 0.2s ease;
+}
+.sixteenth-note-button.active {
+    background-color: #28a745; /* Green for active */
+}
+
+.sixteenth-note-button.active img {
+    filter: none;
+    opacity: 1;
+}
+
+.sixteenth-note-button.disabled {
+    cursor: not-allowed;
+    background-color: #f0f0f0;
+    border-color: #ccc;
+}
+.sixteenth-note-button.disabled img {
+    filter: grayscale(1);
+    opacity: 0.5;
+}
+
+
+/* Sound Toggle Grid */
+.sound-toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 80px);
+  grid-template-rows: repeat(2, 20px);
+  gap: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #ccc;
+  flex-shrink: 0;
+}
+
+.sound-toggle-btn {
+  background-color: #f0f0f0; /* Default grey */
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  color: #555;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ccc;
+  margin: -0.5px;
+}
+
+.sound-toggle-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.sound-toggle-btn.active {
+  color: white;
+}
+
+#beat-toggle.active {
+  background-color: #ffc107; /* Yellow */
+}
+
+#rhythm-toggle.active {
+  background-color: #fd7e14; /* Orange */
+}
+
+#intro-toggle.active {
+  background-color: #ffc107; /* Yellow */
+}
+
+#pitch-toggle.pitch {
+  background-color: #28a745; /* Green */
+  color: white;
+}
+
+#pitch-toggle.drum {
+  background-color: #d6b4fc; /* Light Purple */
+  color: white;
+}
+
+/* Modal Styles */
+.modal-backdrop {
+    display: none; /* Hidden by default */
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.modal-content h2 {
+    margin: 0;
+    font-size: 1.5em;
+    color: #333;
+}
+
+#save-options-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.save-option-btn {
+    padding: 8px 16px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    font-size: 0.9em;
+    background-color: #f0f0f0;
+    transition: all 0.2s ease;
+}
+
+.save-option-btn:hover {
+    border-color: #999;
+}
+
+.save-option-btn.active {
+    color: white;
+    font-weight: bold;
+}
+
+#save-8th-btn.active {
+    background-color: #007bff; /* Blue */
+    border-color: #0056b3;
+}
+
+#save-16th-btn.active {
+    background-color: #28a745; /* Green */
+    border-color: #1e7e34;
+}
+
+#save-triplet-btn.active {
+    background-color: #ffc107; /* Yellow */
+    border-color: #d39e00;
+}
+
+#multi-line-input {
+    width: 100%;
+    height: 200px;
+    padding: 10px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+    resize: vertical;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.modal-button {
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+}
+
+.modal-button.submit {
+    background-color: #007bff;
+    color: white;
+}
+
+.modal-button.submit:hover {
+    background-color: #0056b3;
+}
+
+.modal-button:not(.submit):not(.copy-button) {
+    background-color: #e7e7e7;
+    color: black;
+}
+
+.modal-button:not(.submit):not(.copy-button):hover {
+    background-color: #ddd;
+}
+
+/* Copy Button Styles */
+.copy-button {
+    background-color: #6c757d;
+    color: white;
+    padding: 10px 12px;
+    position: relative;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.copy-button:hover {
+    background-color: #5a6268;
+}
+
+.copy-icon {
+    position: relative;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.copy-square {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border: 2px solid white;
+    border-radius: 2px;
+    background-color: transparent;
+}
+
+.copy-square-back {
+    top: 2px;
+    left: 2px;
+}
+
+.copy-square-front {
+    top: -2px;
+    left: -2px;
+    background-color: #6c757d;
+}
+
+.copy-button:hover .copy-square-front {
+    background-color: #5a6268;
+}
+
+/* Success and error states for copy button */
+.copy-icon.copied,
+.copy-icon.error {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.toggle-container {
+    display: none;
+    border: 1px solid #007bff;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.toggle-button {
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+    font-size: 1em;
+    background-color: white;
+    color: #007bff;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.toggle-button.active {
+    background-color: #007bff;
+    color: white;
+}
+
+/* Styles for capturing (temporarily hide interactive elements) */
+.capturing .circle {
+    cursor: default;
+}
+
+.capturing .word {
+    cursor: default;
+}
+
+.capturing .notes-box.playing {
+    background-color: transparent;
+}
+
+/* Mode Toggle Switch */
+.control-button-group {
+  display: flex;
+  border: 1px solid #007bff;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.mode-button {
+  background-color: white;
+  border: none;
+  padding: 0 12px;
+  height: 40px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  color: #007bff;
+  font-weight: bold;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.mode-button.active {
+  background-color: #007bff;
+  color: white;
+}
+
+.mode-button:not(.active):hover {
+  background-color: #e6f3ff;
+}
+
+/* Responsive adjustments - improved layout strategy */
+@media (max-width: 900px) {
+  .floating-panel {
+    gap: 6px;
+    padding: 8px 10px;
+  }
+  
+  /* Make dropdowns more compact */
+  .lyrics-dropdown,
+  .rhythm-systems-dropdown {
+    min-width: 100px;
+    max-width: 150px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 720px) {
+  .floating-panel {
+    gap: 5px;
+    padding: 8px 8px;
+  }
+  
+  /* Further compress elements */
+  .control-button {
+    height: 36px;
+    padding: 0 8px;
+    font-size: 12px;
+  }
+  
+  .play-button {
+    width: 45px;
+    height: 36px;
+  }
+  
+  .sound-toggle-grid {
+    grid-template-columns: repeat(2, 70px);
+    grid-template-rows: repeat(2, 18px);
+  }
+  
+  .sound-toggle-btn {
+    font-size: 11px;
+  }
+  
+  .mode-button {
+    height: 36px;
+    padding: 0 8px;
+    font-size: 12px;
+  }
+  
+  .lyrics-dropdown,
+  .rhythm-systems-dropdown {
+    min-width: 90px;
+    max-width: 120px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 500px) {
+  .floating-panel {
+    gap: 4px;
+    padding: 6px 6px;
+  }
+  
+  /* Compact everything further */
+  .control-button {
+    height: 32px;
+    padding: 0 6px;
+    font-size: 11px;
+  }
+  
+  .play-button {
+    width: 40px;
+    height: 32px;
+    font-size: 16px;
+  }
+  
+  .icon-button,
+  .time-signature-button {
+    width: 36px;
+    height: 32px;
+  }
+  
+  .sound-toggle-grid {
+    grid-template-columns: repeat(2, 60px);
+    grid-template-rows: repeat(2, 16px);
+  }
+  
+  .sound-toggle-btn {
+    font-size: 10px;
+  }
+  
+  .mode-button {
+    height: 32px;
+    padding: 0 6px;
+    font-size: 11px;
+  }
+  
+  .lyrics-dropdown,
+  .rhythm-systems-dropdown {
+    min-width: 80px;
+    max-width: 100px;
+    font-size: 10px;
+  }
+  
+  /* Make BPM display more compact */
+  #bpm-button {
+    min-width: 60px;
+  }
+}
+
+/* Zoom Controls - adjusted positioning to avoid overlap */
+#zoom-controls {
+  position: fixed;
+  bottom: 80px; /* Raised to avoid panel */
+  left: 20px;
+  z-index: 999; /* Below panel */
+}
+
+/* Adjust zoom controls when panel is collapsed */
+.floating-panel.collapsed ~ #zoom-controls {
+  bottom: 30px;
+}
+
+.fab {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  font-size: 24px;
+  line-height: 56px;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+  transition: all 0.3s ease;
+}
+
+.fab:hover {
+  background-color: #0056b3;
+}
+
+.sub-button {
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  line-height: 40px;
+  position: absolute;
+  bottom: 8px; /* (56-40)/2 */
+  left: 8px; /* (56-40)/2 */
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  opacity: 0;
+  transform: translateY(0);
+  pointer-events: none;
+}
+
+.sub-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+#zoom-in-btn.visible {
+  transform: translateY(-110px);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#zoom-out-btn.visible {
+  transform: translateY(-60px);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Adjust zoom controls on mobile */
+@media (max-width: 720px) {
+  #zoom-controls {
+    bottom: 110px; /* Higher to avoid multi-row panel */
+  }
+  
+  .floating-panel.collapsed ~ #zoom-controls {
+    bottom: 30px;
+  }
+}
+
+/* Zoom level styles */
+#poem {
+  transition: font-size 0.3s ease;
+}
+
+.word, .word-input {
+    font-size: 1em; /* Inherit from #poem */
+}
+.notes-box svg, .notes-box img {
+    width: 3em;
+    height: 2.5em;
+}
+.notes-box.compound svg, .notes-box.compound img {
+    width: 4.5em;
+}
+.notes-box.sixteenth svg, .notes-box.sixteenth img {
+    width: 6em;
+}
+.circle {
+    width: 1em;
+    height: 1em;
+}
+.measure-divider, .final-measure-divider {
+    height: 5em;
+    top: 1.5em;
+}
+
+/* Base font-size for poem is 1.2em, so we adjust based on that */
+#poem.zoom-level-0 { font-size: 0.9em; }  /* 1.2em * 0.75 = 0.9em */
+#poem.zoom-level-1 { font-size: 1.2em; }  /* 1.2em * 1.0  = 1.2em (Default) */
+#poem.zoom-level-2 { font-size: 1.32em; } /* 1.2em * 1.1  = 1.32em */
+#poem.zoom-level-3 { font-size: 1.5em; }  /* 1.2em * 1.25 = 1.5em */
+#poem.zoom-level-4 { font-size: 1.8em; }  /* 1.2em * 1.5  = 1.8em */
+#poem.zoom-level-5 { font-size: 2.1em; }  /* 1.2em * 1.75 = 2.1em */
+
+
+.words.sixteenth-chant {
+    width: 6em;
+    justify-content: space-between;
+    position: relative;
+    left: 0.3em;
+}
+
+.words.single-syllable-whole {
+    justify-content: center;
+}
+
+.add-measure-btn {
+    display: none;
+    position: absolute;
+    top: calc(50% + 12px); /* Position it below the delete button */
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 128, 0, 0.7);
+    color: white;
+    border: 1px solid rgba(0, 100, 0, 0.9);
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    text-align: center;
+    line-height: 20px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: 'Courier New', Courier, monospace;
+    transition: all 0.2s ease;
+    z-index: 1;
+}
+
+.final-measure-divider:hover .add-measure-btn {
+    display: block;
+}
+
+.add-measure-btn:hover {
+    background-color: rgba(0, 128, 0, 1);
+}
+
+/* Delete measure button on final divider */
+.final-measure-divider {
+    position: relative; /* Ensure the button is positioned relative to the divider */
+}
+
+/* Create a larger, invisible hover area */
+.final-measure-divider::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    bottom: -10px;
+    left: -10px;
+    right: -10px;
+    background-color: transparent; /* Make it invisible */
+}
+
+.delete-measure-btn {
+    display: none; /* Hidden by default */
+    position: absolute;
+    top: calc(50% - 12px); /* Move it up */
+    left: 50%;
+    transform: translate(-50%, -50%); /* Center it perfectly */
+    background-color: rgba(255, 0, 0, 0.7);
+    color: white;
+    border: 1px solid rgba(200, 0, 0, 0.9);
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    text-align: center;
+    line-height: 20px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: 'Courier New', Courier, monospace;
+    transition: all 0.2s ease;
+    z-index: 1; /* Ensure button is on top of the pseudo-element */
+}
+
+.final-measure-divider:hover .delete-measure-btn {
+    display: block; /* Show on hover */
+}
+
+.delete-measure-btn:hover {
+    background-color: rgba(255, 0, 0, 1);
+}
+
+.words.triplet-chant {
+    width: 4.5em;
+    justify-content: space-between;
+    position: relative;
+    left: 0.3em;
+}
+
+.words.eighth-chant {
+    width: 3em;
+    justify-content: space-between;
+    position: relative;
+    left: 0.3em;
+}
